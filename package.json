@@ -1,0 +1,31 @@
+{
+  "name": "talkabot",
+  "version": "1.0.0",
+  "description": "chatGPT enabled Discord Bot written in JS",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/epsilonethan/talkaBot.git"
+  },
+  "keywords": [
+    "chatGPT",
+    "javascript",
+    "discord"
+  ],
+  "author": "epsilonethan",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/epsilonethan/talkaBot/issues"
+  },
+  "homepage": "https://github.com/epsilonethan/talkaBot#readme",
+  "type": "module",
+  "dependencies": {
+    "@discordjs/voice": "^0.14.0",
+    "discord.js": "^14.7.1",
+    "dotenv": "^16.0.3",
+    "openapi": "^1.0.1"
+  }
+}
