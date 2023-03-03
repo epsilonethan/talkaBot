@@ -8,7 +8,7 @@ At root of project create a `.env` file. In this file you will need to include t
 - `OPENAI_TOKEN` - This would be the access token from OpenAI
 
 # Current Commands
-- `/ping` - TalkaBot will return `Pong!`
+- `/chat` - TalkaBot will return chatGPT response based on the users query
 
 # Run TalkaBot
 
