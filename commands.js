@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
 import dotenv from 'dotenv';
-import axios from 'axios';
+import * as openaiService from './open-ai.services.js';
 
 export let chat = {
 	data: new SlashCommandBuilder()
@@ -14,41 +14,57 @@ export let chat = {
 
 		await interaction.deferReply();
 
-		const reply = await get_chat(await interaction.options.getString('query'))
+		const query = await interaction.options.getString('query')
 
-		const chatGPTEmbed = new EmbedBuilder()
-			.setColor(0x0099FF)
-			.setDescription(reply)
-			.setTimestamp()
-			.setFooter({ text: 'TalkaBot - a ChatGPT enabled Discord Bot'});
+		const isViolation = await isModerationViolation(query)
 
-		await interaction.editReply({ embeds: [chatGPTEmbed]});
+		if (!isViolation) {
+			const reply = await getChat(query)
+			const chatGPTEmbed = new EmbedBuilder()
+				.setColor(0x0099FF)
+				.setDescription(reply)
+				.setTimestamp()
+				.setFooter({ text: 'TalkaBot - powered by OpenAI' });
+
+			await interaction.editReply({ embeds: [chatGPTEmbed] });
+		}
+		else {
+
+			const chatGPTEmbed = new EmbedBuilder()
+				.setColor(0x0099FF)
+				.setDescription("Your query is in violation of OpenAI Moderation")
+				.setTimestamp()
+				.setFooter({ text: 'TalkaBot - powered by OpenAI' });
+
+			await interaction.editReply({ embeds: [chatGPTEmbed], ephemeral: true })
+		}
+
+
+
 	}
 }
 
-export function getCommands() {
+export function getCommandsArray() {
 	let commands = [];
 	commands.push(this.chat);
 
 	return commands;
 }
 
-async function get_chat(message) {
+async function getChat(message) {
 	dotenv.config();
 	const OPENAI_TOKEN = process.env.OPENAI_TOKEN;
-	const url = 'https://api.openai.com/v1/chat/completions'
-	const data = {
-		"model": "gpt-3.5-turbo",
-		"messages": [{ "role": "user", "content": message }]
-	}
 
-	const headers = {
-		'Content-Type': 'application/json',
-		'Authorization': `Bearer ${OPENAI_TOKEN}`
-	}
-
-	const response = await axios.post(url, data, { headers: headers })
+	const response = await openaiService.chatService(message, OPENAI_TOKEN);
 
 	return response.data.choices[0].message.content
+}
 
+async function isModerationViolation(message) {
+	dotenv.config();
+	const OPENAI_TOKEN = process.env.OPENAI_TOKEN;
+
+	const response = await openaiService.moderationCheckService(message, OPENAI_TOKEN);
+
+	return response.data.results[0].flagged
 }

@@ -1,19 +1,15 @@
 import { Client, Collection, Events, GatewayIntentBits } from "discord.js";
 import dotenv from "dotenv";
-import { register_slash_commands } from "./register-slash-commands.js";
 import * as commands from './commands.js';
 
 dotenv.config();
 const TOKEN = process.env.BOT_TOKEN;
-const CLIENT_ID = process.env.BOT_CLIENT_ID;
-
-await register_slash_commands(TOKEN, CLIENT_ID);
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 client.commands = new Collection();
 
-for (const command of commands.getCommands()) {
+for (const command of commands.getCommandsArray()) {
 	if ('data' in command && 'execute' in command) {
 		client.commands.set(command.data.name, command);
 	} else {
