@@ -1,6 +1,6 @@
 import { Client, Collection, Events, GatewayIntentBits } from "discord.js";
 import dotenv from "dotenv";
-import * as commands from './commands.js';
+import * as commandDefs from './commands.js';
 
 dotenv.config();
 const TOKEN = process.env.BOT_TOKEN;
@@ -9,7 +9,12 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 client.commands = new Collection();
 
-for (const command of commands.getCommandsArray()) {
+let commands = [];
+commands.push(commandDefs.chat);
+commands.push(commandDefs.image);
+
+
+for (const command of commands) {
 	if ('data' in command && 'execute' in command) {
 		client.commands.set(command.data.name, command);
 	} else {

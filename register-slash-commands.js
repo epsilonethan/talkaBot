@@ -1,14 +1,18 @@
 import { REST, Routes } from 'discord.js';
 import dotenv from 'dotenv';
-import * as commands from './commands.js';
+import * as commandDefs from './commands.js';
 
 dotenv.config();
 const TOKEN = process.env.BOT_TOKEN;
 const CLIENT_ID = process.env.BOT_CLIENT_ID;
 
 // Grab the SlashCommandBuilder#toJSON() output of each command's data for deployment
+let commands = [];
+commands.push(commandDefs.chat);
+commands.push(commandDefs.image);
+
 let commandsArray = [];
-for (const command of commands.getCommandsArray()) {
+for (const command of commands) {
 	commandsArray.push(command.data.toJSON());
 }
 

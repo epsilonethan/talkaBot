@@ -1,6 +1,5 @@
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
-import dotenv from 'dotenv';
-import * as openaiService from './open-ai.services.js';
+import {CommandHelper} from './command.helpers.js';
 
 export let chat = {
 	data: new SlashCommandBuilder()
@@ -14,57 +13,71 @@ export let chat = {
 
 		await interaction.deferReply();
 
+		const commandHelper = new CommandHelper();
+
 		const query = await interaction.options.getString('query')
 
-		const isViolation = await isModerationViolation(query)
+		const isViolation = await commandHelper.isModerationViolation(query)
 
 		if (!isViolation) {
-			const reply = await getChat(query)
-			const chatGPTEmbed = new EmbedBuilder()
+			const reply = await commandHelper.getChat(query)
+			const responseEmbed = new EmbedBuilder()
 				.setColor(0x0099FF)
 				.setDescription(reply)
 				.setTimestamp()
 				.setFooter({ text: 'TalkaBot - powered by OpenAI' });
 
-			await interaction.editReply({ embeds: [chatGPTEmbed] });
+			await interaction.editReply({ embeds: [responseEmbed] });
 		}
 		else {
 
-			const chatGPTEmbed = new EmbedBuilder()
+			const responseEmbed = new EmbedBuilder()
 				.setColor(0x0099FF)
 				.setDescription("Your query is in violation of OpenAI Moderation")
 				.setTimestamp()
 				.setFooter({ text: 'TalkaBot - powered by OpenAI' });
 
-			await interaction.editReply({ embeds: [chatGPTEmbed], ephemeral: true })
+			await interaction.editReply({ embeds: [responseEmbed], ephemeral: true })
 		}
-
-
-
 	}
 }
 
-export function getCommandsArray() {
-	let commands = [];
-	commands.push(this.chat);
+export let image = {
+	data: new SlashCommandBuilder()
+		.setName('image')
+		.setDescription('executes a Dall-E query')
+		.addStringOption(option =>
+			option.setName('query')
+				.setDescription('The prompt to send Dall-E')
+				.setRequired(true)),
+	async execute(interaction) {
+		await interaction.deferReply();
 
-	return commands;
-}
+		const commandHelper = new CommandHelper();
 
-async function getChat(message) {
-	dotenv.config();
-	const OPENAI_TOKEN = process.env.OPENAI_TOKEN;
+		const query = await interaction.options.getString('query')
 
-	const response = await openaiService.chatService(message, OPENAI_TOKEN);
+		const isViolation = await commandHelper.isModerationViolation(query)
 
-	return response.data.choices[0].message.content
-}
+		if (!isViolation) {
+			const imageUrl = await commandHelper.getImage(query)
+			const responseEmbed = new EmbedBuilder()
+				.setColor(0x0099FF)
+				.setImage(imageUrl)
+				.setTimestamp()
+				.setFooter({ text: 'TalkaBot - powered by OpenAI' });
 
-async function isModerationViolation(message) {
-	dotenv.config();
-	const OPENAI_TOKEN = process.env.OPENAI_TOKEN;
+			await interaction.editReply({ embeds: [responseEmbed] });
+		}
+		else {
 
-	const response = await openaiService.moderationCheckService(message, OPENAI_TOKEN);
+			const responseEmbed = new EmbedBuilder()
+				.setColor(0x0099FF)
+				.setDescription("Your query is in violation of OpenAI Moderation")
+				.setTimestamp()
+				.setFooter({ text: 'TalkaBot - powered by OpenAI' });
 
-	return response.data.results[0].flagged
+			await interaction.editReply({ embeds: [responseEmbed], ephemeral: true })
+		}
+	}
 }
