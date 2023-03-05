@@ -1,27 +1,47 @@
-import { Client, GatewayIntentBits } from "discord.js";
+import { Client, Collection, Events, GatewayIntentBits } from "discord.js";
 import dotenv from "dotenv";
-import { register_commands } from "./register-slash-commands.js";
+import * as commands from './commands.js';
 
 dotenv.config();
 const TOKEN = process.env.BOT_TOKEN;
-const CLIENT_ID = process.env.BOT_CLIENT_ID;
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-register_commands(TOKEN, CLIENT_ID);
+client.commands = new Collection();
 
-client.on('ready', () => {
-	console.log(`Logged in as ${client.user.tag}!`);
-	client.user.setActivity('Observing', { type: 'WATCHING' });
-});
+for (const command of commands.getCommandsArray()) {
+	if ('data' in command && 'execute' in command) {
+		client.commands.set(command.data.name, command);
+	} else {
+		console.log(`[WARNING] The command at ${command.data.name} is missing a required "data" or "execute" property.`);
+	}
+}
 
-client.on('interactionCreate', async interaction => {
-
+client.on(Events.InteractionCreate, interaction => {
 	if (!interaction.isChatInputCommand()) return;
 
-	if (interaction.commandName === 'ping') {
-		await interaction.reply('Pong!');
+	const command = interaction.client.commands.get(interaction.commandName);
+
+	if (!command) {
+		console.error(`No command matching ${interaction.commandName} was found.`);
+		return;
 	}
+
+	try {
+		command.execute(interaction);
+	} catch (error) {
+		console.error(error);
+		if (interaction.replied || interaction.deferred) {
+			interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+		} else {
+			interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+		}
+	}
+});
+
+client.on(Events.ClientReady, () => {
+	console.log(`Logged in as ${client.user.tag}!`);
+	client.user.setActivity('Observing', { type: 'WATCHING' });
 });
 
 client.login(TOKEN);
